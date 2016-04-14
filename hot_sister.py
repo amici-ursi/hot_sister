@@ -8,9 +8,10 @@
 # Other text that will be below the list
 
 import re
-import praw_script_oauth
 import html.parser
 import time
+import praw
+import os
 
 # defines the main and sister subreddits, and how many posts to list in the sidebar
 subredditlist = {'imagesofafghanistan', 'imagesofaustralia', 'imagesofbelgium', 'imagesofbelize', 'imagesofbrazil', 'imagesofcanada', 'imagesoftoronto', 'imagesofchile', 'imagesofchina', 'imagesofhongkong', 'imagesofengland', 'imagesoffrance', 'imagesofguatemala', 'imagesoficeland', 'imagesofindia', 'imagesofiran', 'imagesofisleofman', 'imagesofjapan', 'imagesoflibya', 'imagesofmaldives', 'imagesofmexico', 'imagesofnetherlands', 'imagesofnewzealand', 'imagesofnorway', 'imagesofperu', 'imagesofrussia', 'imagesofscotland', 'imagesofsyria', 'imagesofusa', 'imagesofalabama', 'imagesofalaska', 'imagesofarizona', 'imagesofarkansas', 'imagesofcalifornia', 'imagesofcolorado', 'imagesofconnecticut', 'imagesofdelaware', 'imagesofflorida', 'imagesofgeorgia', 'imagesofhawaii', 'imagesofidaho', 'imagesofillinois', 'imagesofindiana', 'imagesofiowa', 'imagesofkansas', 'imagesofkentucky', 'imagesoflouisiana', 'imagesofmaine', 'imagesofmaryland', 'imagesofmassachusetts', 'imagesofmichigan', 'imagesofminnesota', 'imagesofmississippi', 'imagesofmissouri', 'imagesofmontana', 'imagesofnebraska', 'imagesofnevada', 'imagesofnewhampshire', 'imagesofnewjersey', 'imagesofnewmexico', 'imagesofnewyork', 'imagesofnorthcarolina', 'imagesofnorthdakota', 'imagesofohio', 'imagesofoklahoma', 'imagesoforegon', 'imagesofpennsylvania', 'imagesofrhodeisland', 'imagesofsouthcarolina', 'imagesofsouthdakota', 'imagesoftennessee', 'imagesoftexas', 'imagesofutah', 'imagesofvermont', 'imagesofvirginia', 'imagesofwashington', 'imagesofwashingtondc', 'imagesofwestvirginia', 'imagesofwisconsin', 'imagesofwyoming', 'imagesofwales', 'imagesofyemen'}
@@ -18,13 +19,20 @@ SISTER_MULTI_HOST = 'amici_ursi'
 SISTER_MULTI_NAME = 'imagesofplaces'
 POSTS_TO_LIST = 5
 
+# login info for the script to log in as, this user must be a mod in the main subreddit
+
 # don't change unless you want different delimiter strings for some reason
 START_DELIM = '[](/hot-sister-start)'
 END_DELIM = '[](/hot-sister-end)'
 
 # log into reddit
 print("logging into hot_sister")
-r = praw_script_oauth.connect("client_id", "client_secret", "client_username", "client_password", oauth_scopes="client_scopes", useragent="hot_sister fork maintained by /u/amici_ursi")
+client_username = os.environ.get("hot_sister_username")
+print("client_username: {}".format(client_username))
+client_password = os.environ.get("hot_sister_password")
+print("client_password: {}".format(client_password))
+r = praw.Reddit(user_agent="hot_sister fork by /u/amici_ursi")
+r.login(client_username, client_password)
 
 # get the subreddits
 while True:
