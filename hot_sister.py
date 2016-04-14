@@ -55,5 +55,6 @@ while True:
         main_subreddit.update_settings(description=new_sidebar)
 
     #sleep for 30 minutes before doing it again
-    print("sleeping for 30 minutes")
-    time.sleep(1800)
+    for minute in range(30, 0, -1):
+        print("sleeping for {} minutes".format(minute))
+        time.sleep(60)
