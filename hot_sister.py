@@ -10,6 +10,7 @@
 import re
 import praw
 import html.parser
+import time
 
 # defines the main and sister subreddits, and how many posts to list in the sidebar
 subredditlist = {'imagesofafghanistan', 'imagesofaustralia', 'imagesofbelgium', 'imagesofbelize', 'imagesofbrazil', 'imagesofcanada', 'imagesoftoronto', 'imagesofchile', 'imagesofchina', 'imagesofhongkong', 'imagesofengland', 'imagesoffrance', 'imagesofguatemala', 'imagesoficeland', 'imagesofindia', 'imagesofiran', 'imagesofisleofman', 'imagesofjapan', 'imagesoflibya', 'imagesofmaldives', 'imagesofmexico', 'imagesofnetherlands', 'imagesofnewzealand', 'imagesofnorway', 'imagesofperu', 'imagesofrussia', 'imagesofscotland', 'imagesofsyria', 'imagesofusa', 'imagesofalabama', 'imagesofalaska', 'imagesofarizona', 'imagesofarkansas', 'imagesofcalifornia', 'imagesofcolorado', 'imagesofconnecticut', 'imagesofdelaware', 'imagesofflorida', 'imagesofgeorgia', 'imagesofhawaii', 'imagesofidaho', 'imagesofillinois', 'imagesofindiana', 'imagesofiowa', 'imagesofkansas', 'imagesofkentucky', 'imagesoflouisiana', 'imagesofmaine', 'imagesofmaryland', 'imagesofmassachusetts', 'imagesofmichigan', 'imagesofminnesota', 'imagesofmississippi', 'imagesofmissouri', 'imagesofmontana', 'imagesofnebraska', 'imagesofnevada', 'imagesofnewhampshire', 'imagesofnewjersey', 'imagesofnewmexico', 'imagesofnewyork', 'imagesofnorthcarolina', 'imagesofnorthdakota', 'imagesofohio', 'imagesofoklahoma', 'imagesoforegon', 'imagesofpennsylvania', 'imagesofrhodeisland', 'imagesofsouthcarolina', 'imagesofsouthdakota', 'imagesoftennessee', 'imagesoftexas', 'imagesofutah', 'imagesofvermont', 'imagesofvirginia', 'imagesofwashington', 'imagesofwashingtondc', 'imagesofwestvirginia', 'imagesofwisconsin', 'imagesofwyoming', 'imagesofwales', 'imagesofyemen'}
@@ -26,13 +27,15 @@ START_DELIM = '[](/hot-sister-start)'
 END_DELIM = '[](/hot-sister-end)'
 
 # log into reddit
+print("logging into hot_sister")
 r = praw.Reddit(user_agent=REDDIT_USERNAME)
 r.login(REDDIT_USERNAME, REDDIT_PASSWORD)
 
 # get the subreddits
 
-while true:
+while True:
     for MAIN_SUBREDDIT in subredditlist:
+        print("running on {}".format(MAIN_SUBREDDIT))
         main_subreddit = r.get_subreddit(MAIN_SUBREDDIT)
         sister_subreddit = r.get_multireddit(SISTER_MULTI_HOST, SISTER_MULTI_NAME)
 
@@ -51,5 +54,6 @@ while true:
                             current_sidebar)
         main_subreddit.update_settings(description=new_sidebar)
 
-        #sleep for 30 minutes before doing it again
-        sleep(1800)
+    #sleep for 30 minutes before doing it again
+    print("sleeping for 30 minutes")
+    time.sleep(1800)
