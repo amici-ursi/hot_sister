@@ -8,7 +8,7 @@
 # Other text that will be below the list
 
 import re
-import praw
+import praw_script_oauth
 import html.parser
 import time
 
@@ -18,21 +18,15 @@ SISTER_MULTI_HOST = 'amici_ursi'
 SISTER_MULTI_NAME = 'imagesofplaces'
 POSTS_TO_LIST = 5
 
-# login info for the script to log in as, this user must be a mod in the main subreddit
-REDDIT_USERNAME = 'username'
-REDDIT_PASSWORD = 'password'
-
 # don't change unless you want different delimiter strings for some reason
 START_DELIM = '[](/hot-sister-start)'
 END_DELIM = '[](/hot-sister-end)'
 
 # log into reddit
 print("logging into hot_sister")
-r = praw.Reddit(user_agent=REDDIT_USERNAME)
-r.login(REDDIT_USERNAME, REDDIT_PASSWORD)
+r = praw_script_oauth.connect("client_id", "client_secret", "client_username", "client_password", oauth_scopes="client_scopes", useragent="hot_sister fork maintained by /u/amici_ursi")
 
 # get the subreddits
-
 while True:
     for MAIN_SUBREDDIT in subredditlist:
         print("running on {}".format(MAIN_SUBREDDIT))
