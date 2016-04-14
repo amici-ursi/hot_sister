@@ -1,5 +1,4 @@
 # Fetches the top posts from a sister subreddit and updates the main subreddit's sidebar with a list of them
-# The user defined in the cfg file must be a moderator of all main subreddits defined in the db
 # The main subreddit's sidebar must include strings to denote the beginning and ending location of the list, the bot will not update the sidebar if these strings are not present
 # With the default delimiters the sidebar should include a chunk of text like:
 # 
@@ -8,56 +7,49 @@
 # [](/hot-sister-end)
 # Other text that will be below the list
 
-import sys, os
 import re
 import praw
-import HTMLParser
-from ConfigParser import SafeConfigParser
-import sqlite3
+import html.parser
 
-def main():
-    containing_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+# defines the main and sister subreddits, and how many posts to list in the sidebar
+subredditlist = {'imagesofafghanistan', 'imagesofaustralia', 'imagesofbelgium', 'imagesofbelize', 'imagesofbrazil', 'imagesofcanada', 'imagesoftoronto', 'imagesofchile', 'imagesofchina', 'imagesofhongkong', 'imagesofengland', 'imagesoffrance', 'imagesofguatemala', 'imagesoficeland', 'imagesofindia', 'imagesofiran', 'imagesofisleofman', 'imagesofjapan', 'imagesoflibya', 'imagesofmaldives', 'imagesofmexico', 'imagesofnetherlands', 'imagesofnewzealand', 'imagesofnorway', 'imagesofperu', 'imagesofrussia', 'imagesofscotland', 'imagesofsyria', 'imagesofusa', 'imagesofalabama', 'imagesofalaska', 'imagesofarizona', 'imagesofarkansas', 'imagesofcalifornia', 'imagesofcolorado', 'imagesofconnecticut', 'imagesofdelaware', 'imagesofflorida', 'imagesofgeorgia', 'imagesofhawaii', 'imagesofidaho', 'imagesofillinois', 'imagesofindiana', 'imagesofiowa', 'imagesofkansas', 'imagesofkentucky', 'imagesoflouisiana', 'imagesofmaine', 'imagesofmaryland', 'imagesofmassachusetts', 'imagesofmichigan', 'imagesofminnesota', 'imagesofmississippi', 'imagesofmissouri', 'imagesofmontana', 'imagesofnebraska', 'imagesofnevada', 'imagesofnewhampshire', 'imagesofnewjersey', 'imagesofnewmexico', 'imagesofnewyork', 'imagesofnorthcarolina', 'imagesofnorthdakota', 'imagesofohio', 'imagesofoklahoma', 'imagesoforegon', 'imagesofpennsylvania', 'imagesofrhodeisland', 'imagesofsouthcarolina', 'imagesofsouthdakota', 'imagesoftennessee', 'imagesoftexas', 'imagesofutah', 'imagesofvermont', 'imagesofvirginia', 'imagesofwashington', 'imagesofwashingtondc', 'imagesofwestvirginia', 'imagesofwisconsin', 'imagesofwyoming', 'imagesofwales', 'imagesofyemen'}
+SISTER_MULTI_HOST = 'amici_ursi'
+SISTER_MULTI_NAME = 'imagesofplaces'
+POSTS_TO_LIST = 5
 
-    # load config file
-    cfg_file = SafeConfigParser()
-    path_to_cfg = os.path.join(containing_dir, 'hot_sister.cfg')
-    cfg_file.read(path_to_cfg)
+# login info for the script to log in as, this user must be a mod in the main subreddit
+REDDIT_USERNAME = 'username'
+REDDIT_PASSWORD = 'password'
 
-    # connect to db and get data
-    path_to_db = os.path.join(containing_dir, 'hot_sister.db')
-    con = sqlite3.connect(path_to_db)
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute('SELECT * FROM subreddit_pairs')
-    subreddit_pairs = cur.fetchall()
+# don't change unless you want different delimiter strings for some reason
+START_DELIM = '[](/hot-sister-start)'
+END_DELIM = '[](/hot-sister-end)'
 
-    # log into reddit
-    r = praw.Reddit(user_agent=cfg_file.get('reddit', 'user_agent'))
-    r.login(cfg_file.get('reddit', 'username'), cfg_file.get('reddit', 'password'))
+# log into reddit
+r = praw.Reddit(user_agent=REDDIT_USERNAME)
+r.login(REDDIT_USERNAME, REDDIT_PASSWORD)
 
-    for pair in subreddit_pairs:
-        # get the subreddits
-        main_subreddit = r.get_subreddit(pair['main'])
-        sister_subreddit = r.get_subreddit(pair['sister'])
+# get the subreddits
 
-        # fetch the posts from the sister subreddit, and build the text to update the sidebar with
+while true:
+    for MAIN_SUBREDDIT in subredditlist:
+        main_subreddit = r.get_subreddit(MAIN_SUBREDDIT)
+        sister_subreddit = r.get_multireddit(SISTER_MULTI_HOST, SISTER_MULTI_NAME)
+
+        # fetch the top posts from the sister subreddit, and build the text to update the sidebar with
         list_text = str()
-        if pair['post_type'] == 'new':
-            get_method = getattr(sister_subreddit, 'get_new_by_date')
-        else:
-            get_method = getattr(sister_subreddit, 'get_hot')
-        for (i, post) in enumerate(get_method(limit=pair['num_posts'])):
-            list_text += '%s. [%s](%s)\n' % (i+1, post.title, post.permalink)
+        for (i, post) in enumerate(sister_subreddit.get_hot(limit=POSTS_TO_LIST)):
+            list_text += '* [%s](%s)\n' % (post.title, post.permalink)
 
         # update the sidebar
+
         current_sidebar = main_subreddit.get_settings()['description']
-        current_sidebar = HTMLParser.HTMLParser().unescape(current_sidebar)
-        replace_pattern = re.compile('%s.*?%s' % (re.escape(cfg_file.get('reddit', 'start_delimiter')), re.escape(cfg_file.get('reddit', 'end_delimiter'))), re.IGNORECASE|re.DOTALL|re.UNICODE)
+        current_sidebar = html.parser.HTMLParser().unescape(current_sidebar)
+        replace_pattern = re.compile('%s.*?%s' % (re.escape(START_DELIM), re.escape(END_DELIM)), re.IGNORECASE|re.DOTALL|re.UNICODE)
         new_sidebar = re.sub(replace_pattern,
-                            '%s\\n\\n%s\\n%s' % (cfg_file.get('reddit', 'start_delimiter'), list_text, cfg_file.get('reddit', 'end_delimiter')),
+                            '%s\\n\\n%s\\n%s' % (START_DELIM, list_text, END_DELIM),
                             current_sidebar)
         main_subreddit.update_settings(description=new_sidebar)
-        
 
-if __name__ == '__main__':
-        main()
+        #sleep for 30 minutes before doing it again
+        sleep(1800)
