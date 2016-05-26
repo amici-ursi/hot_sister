@@ -14,9 +14,12 @@ import praw
 import os
 
 # defines the main and sister subreddits, and how many posts to list in the sidebar
-subredditlist = {'imagesofafghanistan', 'imagesofaustralia', 'imagesofbelgium', 'imagesofbelize', 'imagesofbrazil', 'imagesofcanada', 'imagesoftoronto', 'imagesofchile', 'imagesofchina', 'imagesofhongkong', 'imagesofengland', 'imagesoffrance', 'imagesofguatemala', 'imagesoficeland', 'imagesofindia', 'imagesofiran', 'imagesofisleofman', 'imagesofjapan', 'imagesoflibya', 'imagesofmaldives', 'imagesofmexico', 'imagesofnetherlands', 'imagesofnewzealand', 'imagesofnorway', 'imagesofperu', 'imagesofrussia', 'imagesofscotland', 'imagesofsyria', 'imagesofusa', 'imagesofalabama', 'imagesofalaska', 'imagesofarizona', 'imagesofarkansas', 'imagesofcalifornia', 'imagesofcolorado', 'imagesofconnecticut', 'imagesofdelaware', 'imagesofflorida', 'imagesofgeorgia', 'imagesofhawaii', 'imagesofidaho', 'imagesofillinois', 'imagesofindiana', 'imagesofiowa', 'imagesofkansas', 'imagesofkentucky', 'imagesoflouisiana', 'imagesofmaine', 'imagesofmaryland', 'imagesofmassachusetts', 'imagesofmichigan', 'imagesofminnesota', 'imagesofmississippi', 'imagesofmissouri', 'imagesofmontana', 'imagesofnebraska', 'imagesofnevada', 'imagesofnewhampshire', 'imagesofnewjersey', 'imagesofnewmexico', 'imagesofnewyork', 'imagesofnorthcarolina', 'imagesofnorthdakota', 'imagesofohio', 'imagesofoklahoma', 'imagesoforegon', 'imagesofpennsylvania', 'imagesofrhodeisland', 'imagesofsouthcarolina', 'imagesofsouthdakota', 'imagesoftennessee', 'imagesoftexas', 'imagesofutah', 'imagesofvermont', 'imagesofvirginia', 'imagesofwashington', 'imagesofwashingtondc', 'imagesofwestvirginia', 'imagesofwisconsin', 'imagesofwyoming', 'imagesofwales', 'imagesofyemen'}
-SISTER_MULTI_HOST = 'amici_ursi'
-SISTER_MULTI_NAME = 'imagesofplaces'
+PLACESLIST = {'imagesofafghanistan', 'imagesofaustralia', 'imagesofbelgium', 'imagesofbelize', 'imagesofbrazil', 'imagesofcanada', 'imagesoftoronto', 'imagesofchile', 'imagesofchina', 'imagesofhongkong', 'imagesofengland', 'imagesoffrance', 'imagesofguatemala', 'imagesoficeland', 'imagesofindia', 'imagesofiran', 'imagesofisleofman', 'imagesofjapan', 'imagesoflibya', 'imagesofmaldives', 'imagesofmexico', 'imagesofnetherlands', 'imagesofnewzealand', 'imagesofnorway', 'imagesofperu', 'imagesofrussia', 'imagesofscotland', 'imagesofsyria', 'imagesofusa', 'imagesofalabama', 'imagesofalaska', 'imagesofarizona', 'imagesofarkansas', 'imagesofcalifornia', 'imagesofcolorado', 'imagesofconnecticut', 'imagesofdelaware', 'imagesofflorida', 'imagesofgeorgia', 'imagesofhawaii', 'imagesofidaho', 'imagesofillinois', 'imagesofindiana', 'imagesofiowa', 'imagesofkansas', 'imagesofkentucky', 'imagesoflouisiana', 'imagesofmaine', 'imagesofmaryland', 'imagesofmassachusetts', 'imagesofmichigan', 'imagesofminnesota', 'imagesofmississippi', 'imagesofmissouri', 'imagesofmontana', 'imagesofnebraska', 'imagesofnevada', 'imagesofnewhampshire', 'imagesofnewjersey', 'imagesofnewmexico', 'imagesofnewyork', 'imagesofnorthcarolina', 'imagesofnorthdakota', 'imagesofohio', 'imagesofoklahoma', 'imagesoforegon', 'imagesofpennsylvania', 'imagesofrhodeisland', 'imagesofsouthcarolina', 'imagesofsouthdakota', 'imagesoftennessee', 'imagesoftexas', 'imagesofutah', 'imagesofvermont', 'imagesofvirginia', 'imagesofwashington', 'imagesofwashingtondc', 'imagesofwestvirginia', 'imagesofwisconsin', 'imagesofwyoming', 'imagesofwales', 'imagesofyemen', 'imagesofnetwork', 'imagesofegypt', 'imagesofsingapore', 'imagesofbulgaria'}
+PLACES_MULTI_HOST = 'amici_ursi'
+PLACES_MULTI_NAME = 'imagesofplaces'
+DECADESLIST = {'imagesofthe1800s', 'imagesofthe1900s', 'imagesofthe1910s', 'imagesofthe1920s', 'imagesofthe1930s', 'imagesofthe1940s', 'imagesofthe1950s', 'imagesofthe1960s', 'imagesofthe1970s', 'imagesofthe1980s', 'imagesofthe1990s', 'imagesofthe2000s', 'imagesofthe2010s'}
+DECADES_MULTI_HOST = 'noeatnosleep'
+DECADES_MULTI_NAME = 'imagesofthedecades'
 POSTS_TO_LIST = 5
 
 # login info for the script to log in as, this user must be a mod in the main subreddit
@@ -36,23 +39,40 @@ r.login(client_username, client_password)
 
 # get the subreddits
 while True:
-    for MAIN_SUBREDDIT in subredditlist:
+    #fetch the top posts from the sister MULTI, and build the text to update the sidebar with
+    PLACES_MULTI = r.get_multireddit(PLACES_MULTI_HOST, PLACES_MULTI_NAME)
+    PLACES_LIST_TEXT = str()
+    for (i, post) in enumerate(PLACES_MULTI.get_hot(limit=POSTS_TO_LIST)):
+        PLACES_LIST_TEXT += ' * [%s](%s)\n' % (post.title, post.permalink)
+    DECADES_MULTI = r.get_multireddit(DECADES_MULTI_HOST, DECADES_MULTI_NAME)
+    DECADES_LIST_TEXT = str()
+    for (i, post) in enumerate(DECADES_MULTI.get_hot(limit=POSTS_TO_LIST)):
+        DECADES_LIST_TEXT += ' * [%s](%s)\n' % (post.title, post.permalink)
+    COMBINED_TEXT = "* Places:\n{}\n\n* Times:\n{}".format(PLACES_LIST_TEXT, DECADES_LIST_TEXT)
+    for MAIN_SUBREDDIT in PLACESLIST:
         print("running on {}".format(MAIN_SUBREDDIT))
         main_subreddit = r.get_subreddit(MAIN_SUBREDDIT)
-        sister_subreddit = r.get_multireddit(SISTER_MULTI_HOST, SISTER_MULTI_NAME)
-
-        # fetch the top posts from the sister subreddit, and build the text to update the sidebar with
-        list_text = str()
-        for (i, post) in enumerate(sister_subreddit.get_hot(limit=POSTS_TO_LIST)):
-            list_text += '* [%s](%s)\n' % (post.title, post.permalink)
-
+        
         # update the sidebar
-
         current_sidebar = main_subreddit.get_settings()['description']
         current_sidebar = html.parser.HTMLParser().unescape(current_sidebar)
         replace_pattern = re.compile('%s.*?%s' % (re.escape(START_DELIM), re.escape(END_DELIM)), re.IGNORECASE|re.DOTALL|re.UNICODE)
         new_sidebar = re.sub(replace_pattern,
-                            '%s\\n\\n%s\\n%s' % (START_DELIM, list_text, END_DELIM),
+                            '%s\\n\\n%s\\n%s' % (START_DELIM, COMBINED_TEXT, END_DELIM),
+                            current_sidebar)
+        main_subreddit.update_settings(description=new_sidebar)
+
+    #DO THE DECADES
+    for MAIN_SUBREDDIT in DECADESLIST:
+        print("running on {}".format(MAIN_SUBREDDIT))
+        main_subreddit = r.get_subreddit(MAIN_SUBREDDIT)
+
+        # update the sidebar
+        current_sidebar = main_subreddit.get_settings()['description']
+        current_sidebar = html.parser.HTMLParser().unescape(current_sidebar)
+        replace_pattern = re.compile('%s.*?%s' % (re.escape(START_DELIM), re.escape(END_DELIM)), re.IGNORECASE|re.DOTALL|re.UNICODE)
+        new_sidebar = re.sub(replace_pattern,
+                            '%s\\n\\n%s\\n%s' % (START_DELIM, COMBINED_TEXT, END_DELIM),
                             current_sidebar)
         main_subreddit.update_settings(description=new_sidebar)
 
